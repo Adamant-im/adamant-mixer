@@ -1,7 +1,7 @@
 {
-  "name": "adamant-tradebot",
+  "name": "adamant-mixer",
   "version": "5.0.0",
-  "description": "ADAMANT Trading and Market Making bot",
+  "description": "ADAMANT Mixer",
   "main": "index.js",
   "scripts": {
     "lint": "npx eslint -f visualstudio .",
@@ -69,10 +69,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Adamant-im/adamant-tradebot.git"
+    "url": "git+https://github.com/Adamant-im/adamant-adamant-mixer.git"
   },
   "bugs": {
-    "url": "https://github.com/Adamant-im/adamant-tradebot/issues"
+    "url": "https://github.com/Adamant-im/adamant-mixer/issues"
   },
-  "homepage": "https://github.com/Adamant-im/adamant-tradebot#readme"
+  "homepage": "https://github.com/Adamant-im/adamant-mixer#readme"
 }

@@ -6,11 +6,13 @@ const log = require('../helpers/log');
 const notify = require('../helpers/notify');
 const api = require('./api');
 
+/*
 const tradeParams = require('../trade/settings/tradeParams_' + config.exchange);
 const traderapi = require('../trade/trader_' + config.exchange)(config.apikey, config.apisecret, config.apipassword, log);
 const orderCollector = require('../trade/orderCollector');
 const orderStats = require('../trade/orderStats');
 const orderUtils = require('../trade/orderUtils');
+*/
 
 const timeToConfirm = 1000 * 60 * 10; // 10 minutes to confirm
 const pendingConfirmation = {
@@ -1310,9 +1312,9 @@ function params() {
 
 function help({}, {}, commandFix) {
 
-  let output = `I am **online** and ready to trade. I do trading and market-making, and provide market info and stats.`;
-  output += ` See command reference on https://marketmaking.app/commands/`;
-  output += `\nHappy trading!`;
+  let output = `I am **online** and ready to mix transactions.`;
+  output += ` See command reference on https://xxxxxxxxxxxxxx`;
+  output += `\nHappy mixing!`;
 
   if (commandFix === 'help') {
     output += `\n\nNote: commands starts with slash **/**. Example: **/help**.`;

@@ -12,7 +12,7 @@ mongoClient.connect((error, client) => {
     log.error(`Unable to connect to MongoBD, ` + error);
     process.exit(-1);
   }
-  const db = client.db('tradebotdb');
+  const db = client.db('mixerdb');
 
   collections.db = db;
 
@@ -27,7 +27,7 @@ mongoClient.connect((error, client) => {
   collections.incomingTxsDb = model(incomingTxsCollection);
   collections.systemDb = model(db.collection('systems'));
 
-  log.log(`${config.notifyName} successfully connected to 'tradebotdb' MongoDB.`);
+  log.log(`${config.notifyName} successfully connected to 'mixerdb' MongoDB.`);
 
 });
 
