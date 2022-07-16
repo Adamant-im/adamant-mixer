@@ -7,11 +7,11 @@ const notify = require('../helpers/notify');
 const api = require('./api');
 
 /*
-const tradeParams = require('../trade/settings/tradeParams_' + config.exchange);
-const traderapi = require('../trade/trader_' + config.exchange)(config.apikey, config.apisecret, config.apipassword, log);
-const orderCollector = require('../trade/orderCollector');
-const orderStats = require('../trade/orderStats');
-const orderUtils = require('../trade/orderUtils');
+? const tradeParams = require('../trade/settings/tradeParams_' + config.exchange);
+? const traderapi = require('../trade/trader_' + config.exchange)(config.apikey, config.apisecret, config.apipassword, log);
+? const orderCollector = require('../trade/orderCollector');
+? const orderStats = require('../trade/orderStats');
+? const orderUtils = require('../trade/orderUtils');
 */
 
 const timeToConfirm = 1000 * 60 * 10; // 10 minutes to confirm
@@ -54,7 +54,7 @@ module.exports = async (commandMsg, tx, itx) => {
       itx.update({ isProcessed: true }, true);
     }
 
-    utils.saveConfig();
+    // ? utils.saveConfig();
 
   } catch (e) {
     tx = tx || {};
@@ -2085,29 +2085,31 @@ function version() {
 
 const commands = {
   help,
-  rates,
-  stats,
-  pair,
-  orders,
-  calc,
-  balances,
-  version,
-  start,
-  stop,
-  buypercent,
-  amount,
-  interval,
-  clear,
-  fill,
-  params,
-  buy,
-  sell,
-  enable,
-  disable,
-  deposit,
-  make,
-  y,
-  saveConfig: utils.saveConfig,
+  /*
+  ? rates,
+  ? stats,
+  ? pair,
+  ? orders,
+  ? calc,
+  ? balances,
+  ? version,
+  ? start,
+  ? stop,
+  ? buypercent,
+  ? amount,
+  ? interval,
+  ? clear,
+  ? fill,
+  ? params,
+  ? buy,
+  ? sell,
+  ? enable,
+  ? disable,
+  ? deposit,
+  ? make,
+  ? y,
+  ? saveConfig: utils.saveConfig,
+  */
 };
 
 module.exports.commands = commands;

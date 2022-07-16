@@ -105,3 +105,4 @@ dist
 
 # Config file for development
 config.test
+config.test.bak

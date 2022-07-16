@@ -18,33 +18,59 @@ const fields = {
     type: Array,
     default: ['https://info.adamant.im'],
   },
-  exchanges: {
-    type: Array,
-    isRequired: true,
-  },
-  exchange: {
-    type: String,
-    isRequired: true,
-  },
-  pair: {
-    type: String,
-    isRequired: true,
-  },
-  clearAllOrdersInterval: {
+
+  /*
+  ? exchanges: {
+  ?   type: Array,
+  ?   isRequired: true,
+  ? },
+  ? exchange: {
+  ?   type: String,
+  ?   isRequired: true,
+  ? },
+  ? pair: {
+  ?   type: String,
+  ?   isRequired: true,
+  ? },
+  ? clearAllOrdersInterval: {
+  ?   type: Number,
+  ?   default: 0,
+  ? },
+  ? apikey: {
+  ?   type: String,
+  ?   isRequired: true,
+  ? },
+  ? apisecret: {
+  ?   type: String,
+  ?   isRequired: true,
+  ? },
+  ? apipassword: {
+  ?   type: String,
+  ?   default: '',
+  ? },
+  */
+
+  feePercent: {
     type: Number,
-    default: 0,
+    default: 5,
   },
-  apikey: {
-    type: String,
-    isRequired: true,
+  feeFixed: {
+    type: Number,
+    default: 3,
   },
-  apisecret: {
-    type: String,
-    isRequired: true,
+  createFakeAccountIntervalHours: {
+    type: Object,
+    default: {
+      from: 24,
+      to: 240,
+    },
   },
-  apipassword: {
-    type: String,
-    default: '',
+  sendToFakeAccountIntervalMinutes: {
+    type: Object,
+    default: {
+      from: 0,
+      to: 600,
+    },
   },
   admin_accounts: {
     type: Array,
@@ -119,18 +145,21 @@ try {
   config.notifyName = `${config.bot_name} (${config.address})`;
   config.version = require('../package.json').version;
 
-  config.supported_exchanges = config.exchanges.join(', ');
-  config.exchangeName = config.exchange;
-  config.exchange = config.exchangeName.toLowerCase();
-  config.pair = config.pair.toUpperCase();
-  config.coin1 = config.pair.split('/')[0].trim();
-  config.coin2 = config.pair.split('/')[1].trim();
+  /*
+  ? config.supported_exchanges = config.exchanges.join(', ');
+  ? config.exchangeName = config.exchange;
+  ? config.exchange = config.exchangeName.toLowerCase();
+  ? config.pair = config.pair.toUpperCase();
+  ? config.coin1 = config.pair.split('/')[0].trim();
+  ? config.coin2 = config.pair.split('/')[1].trim();
+  */
 
   Object.keys(fields).forEach((f) => {
     if (!config[f] && fields[f].isRequired) {
       exit(`Bot's ${address} config is wrong. Field _${f}_ is not valid. Cannot start Bot.`);
     } else if (!config[f] && config[f] !== 0 && fields[f].default) {
       config[f] = fields[f].default;
+      // TODO Make assigment in case fields[f] is Object
     }
     if (config[f] && fields[f].type !== config[f].__proto__.constructor) {
       exit(`Bot's ${address} config is wrong. Field type _${f}_ is not valid, expected type is _${fields[f].type.name}_. Cannot start Bot.`);

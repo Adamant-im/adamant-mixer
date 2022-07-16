@@ -1,15 +1,17 @@
 const config = require('../modules/configReader');
 const log = require('./log');
-const tradeParams = require('../trade/settings/tradeParams_' + config.exchange);
+// ? const tradeParams = require('../trade/settings/tradeParams_' + config.exchange);
 const fs = require('fs');
 const { SAT, EPOCH, MINUTE } = require('./const');
 
 module.exports = {
 
-  saveConfig(isWebApi = false) {
-    const toSave = 'module.exports = ' + JSON.stringify(tradeParams, null, 2).replace(/"/g, '\'').replace(/\n\}/g, ',\n};\n');
-    fs.writeFileSync('./trade/settings/tradeParams_' + config.exchange + '.js', toSave);
-  },
+  /*
+  ? saveConfig(isWebApi = false) {
+  ?   const toSave = 'module.exports = ' + JSON.stringify(tradeParams, null, 2).replace(/"/g, '\'').replace(/\n\}/g, ',\n};\n');
+  ?   fs.writeFileSync('./trade/settings/tradeParams_' + config.exchange + '.js', toSave);
+  ? },
+  */
 
   /**
    * Returns object with all of properties as a string for logging
