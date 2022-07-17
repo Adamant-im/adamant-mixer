@@ -106,3 +106,4 @@ dist
 # Config file for development
 config.test
 config.test.bak
+config.default.json.bak
