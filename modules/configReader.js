@@ -159,7 +159,7 @@ try {
       exit(`Bot's ${address} config is wrong. Field _${f}_ is not valid. Cannot start Bot.`);
     } else if (!config[f] && config[f] !== 0 && fields[f].default) {
       config[f] = fields[f].default;
-      // TODO Make assigment in case fields[f] is Object
+      // TODO Make assigment in case fields[f] is Object ???
     }
     if (config[f] && fields[f].type !== config[f].__proto__.constructor) {
       exit(`Bot's ${address} config is wrong. Field type _${f}_ is not valid, expected type is _${fields[f].type.name}_. Cannot start Bot.`);

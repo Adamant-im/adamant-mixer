@@ -110,19 +110,21 @@ module.exports = async (tx) => {
     !itx.isSpam &&
     (messageDirective === 'command' || messageDirective === 'unknown')
   ) {
-    log.warn(`${config.notifyName} received a message from non-admin user _${tx.senderId}_. Ignoring. Income ADAMANT Tx: https://explorer.adamant.im/tx/${tx.id}.`);
+    // ? log.warn(`${config.notifyName} received a message from non-admin user _${tx.senderId}_. Ignoring. Income ADAMANT Tx: https://explorer.adamant.im/tx/${tx.id}.`);
     itx.update({
-      isProcessed: true,
+      // ? isProcessed: true,
       isNonAdmin: true,
     });
-    if (config.notify_non_admins) {
-      const notAdminMsg = `I won't execute your commands as you are not an admin. Connect with my master.`;
-      api.sendMessage(config.passPhrase, tx.senderId, notAdminMsg).then((response) => {
-        if (!response.success) {
-          log.warn(`Failed to send ADM message '${notAdminMsg}' to ${tx.senderId}. ${response.errorMessage}.`);
-        }
-      });
-    }
+    /*
+    ? if (config.notify_non_admins) {
+    ?   const notAdminMsg = `I won't execute your commands as you are not an admin. Connect with my master.`;
+    ?   api.sendMessage(config.passPhrase, tx.senderId, notAdminMsg).then((response) => {
+    ?     if (!response.success) {
+    ?       log.warn(`Failed to send ADM message '${notAdminMsg}' to ${tx.senderId}. ${response.errorMessage}.`);
+    ?     }
+    ?   });
+    ? }
+    */
   }
 
   await itx.save();

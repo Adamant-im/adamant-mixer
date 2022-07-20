@@ -20,7 +20,7 @@ async function check() {
       'and:recipientId': config.address, // get only Txs for the bot
       'and:types': '0,8', // get direct transfers and messages
       'and:fromHeight': lastProcessedBlockHeight + 1, // from current height if the first run, or from the last processed block
-      'returnAsset': '1', // get messages' contents
+      // ? 'returnAsset': '1', // get messages' contents
       'orderBy': 'timestamp:desc', // latest Txs
     };
 

@@ -41,7 +41,7 @@ module.exports = async (commandMsg, tx, itx) => {
     const command = commands[commandName];
 
     if (command) {
-      commandResult = await command(group, tx, itx?.commandFix); // commandFix if for /help only
+      commandResult = await command(group, tx, itx?.commandFix, itx?.isNonAdmin); // commandFix if for /help only
     } else {
       commandResult.msgSendBack = `I don’t know */${commandName}* command. ℹ️ You can start with **/help**.`;
     }
@@ -99,6 +99,38 @@ async function y(params, tx) {
   } catch (e) {
     log.error(`Error in y()-confirmation of ${utils.getModuleName(module.id)} module: ` + e);
   }
+}
+
+async function send(params) {
+  return {
+    msgNotify: 'Command /send not implemented yet.',
+    msgSendBack: `Command /send not implemented yet.`,
+    notifyType: 'warn',
+  };
+}
+
+async function balance(params, tx, _, isNonAdmin) {
+  if (isNonAdmin) {
+    if (config.notify_non_admins) {
+      const notAdminMsg = `I won't execute this command as you are not an admin. Connect with my master.`;
+      api.sendMessage(config.passPhrase, tx.senderId, notAdminMsg).then((response) => {
+        if (!response.success) {
+          log.warn(`Failed to send ADM message '${notAdminMsg}' to ${tx.senderId}. ${response.errorMessage}.`);
+        }
+      });
+    }
+    return {
+      msgNotify: `Command /balance won't be executed as your are not an admin.`,
+      msgSendBack: `Command /balance won't be executed as your are not an admin.`,
+      notifyType: 'warn',
+    };
+  }
+
+  return {
+    msgNotify: 'Command /balance not implemented yet.',
+    msgSendBack: `Command /balance not implemented yet.`,
+    notifyType: 'warn',
+  };
 }
 
 function start(params) {
@@ -2085,6 +2117,8 @@ function version() {
 
 const commands = {
   help,
+  send,
+  balance,
   /*
   ? rates,
   ? stats,
