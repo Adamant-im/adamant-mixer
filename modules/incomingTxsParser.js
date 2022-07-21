@@ -49,7 +49,16 @@ module.exports = async (tx) => {
   }
 
   let messageDirective = 'unknown';
-  if (decryptedMessage.includes('_transaction') || tx.amount > 0) {
+
+  /*
+  ? if (decryptedMessage.includes('_transaction') || tx.amount > 0) {
+  ?   messageDirective = 'transfer';
+  ? } else if (decryptedMessage.startsWith('/')) {
+  ?   messageDirective = 'command';
+  ? }
+  */
+
+  if (tx.type === 0 || tx.amount > 0) {
     messageDirective = 'transfer';
   } else if (decryptedMessage.startsWith('/')) {
     messageDirective = 'command';
@@ -67,7 +76,7 @@ module.exports = async (tx) => {
     date: utils.unixTimeStampMs(),
     timestamp: tx.timestamp,
     amount: tx.amount,
-    fee: tx.fee,
+    fee: 0,
     type: messageDirective,
     senderId: tx.senderId,
     senderPublicKey: tx.senderPublicKey,

@@ -19,11 +19,11 @@ mongoClient.connect((error, client) => {
   const incomingTxsCollection = db.collection('incomingtxs');
   incomingTxsCollection.createIndex([['date', 1], ['senderId', 1]]);
 
-  const ordersCollection = db.collection('orders');
-  ordersCollection.createIndex([['isProcessed', 1], ['purpose', 1]]);
-  ordersCollection.createIndex([['pair', 1], ['exchange', 1]]);
+  const paymentsCollection = db.collection('payments');
+  paymentsCollection.createIndex([['txId', 1], ['status', 1]]);
+  paymentsCollection.createIndex([['senderId', 1], ['recipientId', 1]]);
 
-  collections.ordersDb = model(ordersCollection);
+  collections.paymentsDb = model(paymentsCollection);
   collections.incomingTxsDb = model(incomingTxsCollection);
   collections.systemDb = model(db.collection('systems'));
 
