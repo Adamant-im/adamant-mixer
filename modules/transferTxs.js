@@ -8,26 +8,23 @@ const utils = require('../helpers/utils');
 module.exports = async (itx, tx) => {
 
   const { paymentsDb } = db;
-  const payment = new paymentsDb({
-    txid: tx.id,
+  const pay = new paymentsDb({
+    txId: tx.id,
     senderId: tx.senderId,
-    date: utils.unixTimeStampMs(),
+    senderType: 1,
+    recipientId: tx.recipientId,
+    recipientType: 1,
+    type: 0,
+    actualType: 0,
+    status: tx.confirmations > 1 ? 1 : 0,
+    confirmations: tx.confirmations,
+    updateCounter: 1,
     timestamp: tx.timestamp,
     amount: tx.amount,
-    fee: 0,
-    type: 0,
-    senderPublicKey: tx.senderPublicKey,
-    recipientPublicKey: tx.recipientPublicKey,
-    // these will be undefined, when we get Tx via socket. Actually we don't need them, store them for a reference
-    blockId: tx.blockId,
-    height: tx.height,
-    block_timestamp: tx.block_timestamp,
-    confirmations: tx.confirmations,
-    // these will be undefined, when we get Tx via REST
-    relays: tx.relays,
-    receivedAt: tx.receivedAt,
+    date: tx.date,
   });
 
+  await pay.save();
 
   const msgSendBack = `I got a transfer from you. Thanks, bro.`;
   const msgNotify = `${config.notifyName} got a transfer transaction. Income ADAMANT Tx: https://explorer.adamant.im/tx/${tx.id}.`;

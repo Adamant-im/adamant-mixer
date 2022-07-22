@@ -107,3 +107,7 @@ dist
 config.test
 config.test.bak
 config.default.json.bak
+
+# Test pieces of code
+test_*.js
+modules/payments_model.txt
