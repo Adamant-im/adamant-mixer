@@ -4,6 +4,7 @@ const config = require('./configReader');
 const api = require('./api');
 const log = require('../helpers/log');
 const utils = require('../helpers/utils');
+const { USER_STATUSES, ADM_MIN_CONFIRMATIONS, PAYMENT_STATUSES } = require('../helpers/const');
 
 module.exports = async (itx, tx) => {
 
@@ -11,12 +12,12 @@ module.exports = async (itx, tx) => {
   const pay = new paymentsDb({
     txId: tx.id,
     senderId: tx.senderId,
-    senderType: 1,
+    senderType: USER_STATUSES.REAL,
     recipientId: tx.recipientId,
-    recipientType: 1,
+    recipientType: USER_STATUSES.REAL,
     type: 0,
     actualType: 0,
-    status: tx.confirmations > 1 ? 1 : 0,
+    status: tx.confirmations >= ADM_MIN_CONFIRMATIONS ? PAYMENT_STATUSES.CONFIRMED : PAYMENT_STATUSES.NOT_CONFIRMED,
     confirmations: tx.confirmations,
     updateCounter: 1,
     timestamp: tx.timestamp,

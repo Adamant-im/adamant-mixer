@@ -6,13 +6,20 @@ const utils = require('../helpers/utils');
 const exchangerUtils = require('../helpers/cryptos/exchanger');
 const db = require('./DB');
 const api = require('./api');
+const {
+  ADM_MAX_CONFIRMATION_COUNTER,
+  ADM_MIN_CONFIRMATIONS,
+  PAYMENT_STATUSES,
+  SAT,
+  TX_CHECKER_INTERVAL,
+} = require('../helpers/const');
 
 module.exports = async (pay) => {
 
-  const admTxDescription = `Income ADAMANT Tx: ${constants.ADM_EXPLORER_URL}/tx/${pay ? pay.admTxId : 'undefined'} from ${pay ? pay.senderId : 'undefined'}`;
+  const admTxDescription = `Income ADAMANT Tx: ${constants.ADM_EXPLORER_URL}/tx/${pay ? pay.txId : 'undefined'} from ${pay ? pay.senderId : 'undefined'}`;
   try {
 
-    log.log(`Updating incoming Tx ${pay.inTxid} confirmations… ${admTxDescription}.`);
+    log.log(`Updating incoming Tx ${pay.txId} confirmations… ${admTxDescription}.`);
 
     const tx = await exchangerUtils['ADM'].getTransaction(pay.txId);
     if (!tx) {
@@ -20,16 +27,12 @@ module.exports = async (pay) => {
       return;
     }
 
-    pay.status = tx.status ? 1 : 0;
-    if (pay.status === 0) {
-      pay.update({
-        error: constants.ERRORS.TX_FAILED,
-        transactionIsFailed: true,
-        isFinished: true,
-        txConfirmed: false,
-      }, true);
-      const msgNotify = `${config.notifyName} notifies transaction _${pay.txId}_ of _${pay.amount}_ _ADM_ is Failed. ${admTxDescription}.`;
-      const msgSendBack = `Transaction of _${pay.amount}_ _ADM_ with Tx ID _${pay.txId}_ is Failed and will not be processed. Check _ADM_ blockchain explorer and try again. If you think it’s a mistake, contact my master.`;
+    pay.confirmations = tx.confirmations;
+    if (pay.updateCounter > ADM_MAX_CONFIRMATION_COUNTER) {
+      pay.status = PAYMENT_STATUSES.FAILED;
+      await pay.save();
+      const msgNotify = `${config.notifyName} notifies transaction _${pay.txId}_ of _${pay.amount/SAT}_ _ADM_ is Failed. ${admTxDescription}.`;
+      const msgSendBack = `Transaction of _${pay.amount/SAT}_ _ADM_ with Tx ID _${pay.txId}_ is Failed and will not be processed. Check _ADM_ blockchain explorer and try again. If you think it’s a mistake, contact my master.`;
       notify(msgNotify, 'error');
       api.sendMessage(config.passPhrase, pay.senderId, msgSendBack).then((response) => {
         if (!response.success) {
@@ -39,7 +42,7 @@ module.exports = async (pay) => {
       return;
     }
 
-    if (!tx.height && !tx.confirmations /* && !pay.inTxIsInstant */) {
+    if (!tx.height && tx.confirmations < ADM_MIN_CONFIRMATIONS) {
       log.warn(`Unable to get Tx ${pay.txId} height or confirmations. Will try again next time. ${admTxDescription}.`);
       return;
     }
@@ -54,38 +57,29 @@ module.exports = async (pay) => {
       confirmations = lastBlockHeight - tx.height + 1;
     }
 
-    pay.update({
-      status: tx.status,
-      confirmations,
-    });
-
-    if (pay.inTxStatus && pay.inConfirmations >= config['min_confirmations_' + pay.inCurrency]) {
-      pay.inTxConfirmed = true;
-      log.log(`Tx ${pay.inTxid} is confirmed, it reached minimum of ${config['min_confirmations_' + pay.inCurrency]} network confirmations. ${admTxDescription}.`);
-    } else if (pay.inTxIsInstant) {
-      pay.inTxConfirmed = true;
-      log.log(`Tx ${pay.inTxid} is confirmed as InstantSend verified. Currently it has ${pay.inConfirmations ? pay.inConfirmations : 0} network confirmations. ${admTxDescription}.`);
+    if (confirmations >= ADM_MIN_CONFIRMATIONS) {
+      log.log(`Tx ${pay.txId} is confirmed, it reached minimum of 2 network confirmations. ${admTxDescription}.`);
     } else {
-      log.log(`Updated Tx ${pay.inTxid} confirmations: ${pay.inConfirmations && pay.inConfirmations >= 0 ? pay.inConfirmations : 0}. ${admTxDescription}.`);
+      log.log(`Updated Tx ${pay.txId} confirmations: ${pay.confirmations && confirmations >= 2 ? pay.confirmations : 0}. ${admTxDescription}.`);
     }
 
+    pay.status = confirmations >= ADM_MIN_CONFIRMATIONS ? PAYMENT_STATUSES.CONFIRMED : PAYMENT_STATUSES.NOT_CONFIRMED;
+    pay.confirmations = confirmations;
+    pay.updateCounter++;
     await pay.save();
 
   } catch (e) {
-    log.error(`Failed to get Tx ${pay ? pay.inTxid : 'undefined'} confirmations: ${e.toString()}. Will try again next time. ${admTxDescription}.`);
+    log.error(`Failed to get Tx ${pay ? pay.txId : 'undefined'} confirmations: ${e.toString()}. Will try again next time. ${admTxDescription}.`);
   }
 
 };
 
 setInterval(async () => {
   const { paymentsDb } = db;
-  (await paymentsDb.find({
-    isBasicChecksPassed: true,
-    transactionIsValid: true,
-    isFinished: false,
-    transactionIsFailed: false,
-    inTxConfirmed: { $ne: true },
-  })).forEach(async (pay) => {
+  (arr = await paymentsDb.find({
+    status: PAYMENT_STATUSES.NOT_CONFIRMED,
+  }));
+  arr.forEach(async (pay) => {
     module.exports(pay);
   });
 }, constants.CONFIRMATIONS_INTERVAL);

@@ -12,6 +12,21 @@ module.exports = {
   MAX_ADM_MESSAGE_LENGTH: 10000,
   DEFAULT_ORDERBOOK_ORDERS_COUNT: 15,
   CONFIRMATIONS_INTERVAL: 3 * 1000, // Check for payment confirmations every 3 sec
+  ADM_MIN_CONFIRMATIONS: 2, // Minimal number of transfer confirmations
+  ADM_MAX_CONFIRMATION_COUNTER: 10, // Maximal number of confirmation update attempts
+
+  PAYMENT_STATUSES: { // Статусы платежа
+    NOT_CONFIRMED: 0, // Получение не подтверждено, количество подтверждений в блокчейне меньше 2
+    CONFIRMED: 1, // Завершена, количество подтверждений в блокчейне > 1
+    PLANNED: 2, // Запланирована (frozen)
+    PLANNED_CANCELED: 3, // Запланированная транзакция отменена
+    FAILED: 4, // Перевод не удался
+  },
+
+  USER_STATUSES: {
+    FAKE: 0, // Аккаунт бота, который используем для перемешивания транзакций
+    REAL: 1, // Реальный пользователь
+  },
 
   ERRORS: {
     UNABLE_TO_FETCH_TX: 10,
@@ -24,6 +39,5 @@ module.exports = {
     TX_FAILED: 14,
     UNABLE_TO_FETCH_SENT_TX: 14,
     SENT_TX_FAILED: 21,
-
   },
 };

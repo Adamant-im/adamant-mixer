@@ -4,6 +4,7 @@ const checker = require('./modules/checkerTransactions');
 const doClearDB = process.argv.includes('clear_db');
 const config = require('./modules/configReader');
 const txParser = require('./modules/incomingTxsParser');
+const confirmationsCounter = require('./modules/confirmationsCounter');
 
 // Socket connection
 const api = require('./modules/api');
@@ -13,6 +14,7 @@ setTimeout(init, 5000);
 
 function init() {
   require('./server');
+  require('./modules/confirmationsCounter');
   try {
     if (doClearDB) {
       console.log('Clearing database…');
