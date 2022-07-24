@@ -4,5 +4,12 @@
 			"path": "."
 		}
 	],
-	"settings": {}
+	"settings": {
+		"files.associations": {
+			"config.default.json": "jsonc",
+			"config.default.json.bak": "jsonc",
+			"config.test": "jsonc",
+			"config.test.bak": "jsonc"
+		}
+	}
 }

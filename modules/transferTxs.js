@@ -4,7 +4,11 @@ const config = require('./configReader');
 const api = require('./api');
 const log = require('../helpers/log');
 const utils = require('../helpers/utils');
-const { USER_STATUSES, ADM_MIN_CONFIRMATIONS, PAYMENT_STATUSES } = require('../helpers/const');
+const {
+  USER_STATUSES,
+  ADM_MIN_CONFIRMATIONS,
+  PAYMENT_STATUSES,
+} = require('../helpers/const');
 
 module.exports = async (itx, tx) => {
 

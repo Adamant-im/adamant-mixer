@@ -1,6 +1,6 @@
 {
   "name": "adamant-mixer",
-  "version": "5.0.0",
+  "version": "0.0.1",
   "description": "ADAMANT Mixer",
   "main": "index.js",
   "scripts": {

@@ -1,3 +1,4 @@
+const db = require('./DB');
 const constants = require('../helpers/const');
 const utils = require('../helpers/utils');
 const exchangerUtils = require('../helpers/cryptos/exchanger');
@@ -5,6 +6,7 @@ const config = require('./configReader');
 const log = require('../helpers/log');
 const notify = require('../helpers/notify');
 const api = require('./api');
+const { PAYMENT_STATUSES } = require('../helpers/const');
 
 /*
 ? const tradeParams = require('../trade/settings/tradeParams_' + config.exchange);
@@ -64,6 +66,214 @@ module.exports = async (commandMsg, tx, itx) => {
   return commandResult;
 };
 
+function help({}, {}, commandFix) {
+
+  let output = `I am **online** and ready to mix transactions.`;
+  output += ` See command reference on https://xxxxxxxxxxxxxx`;
+  output += `\nHappy mixing!`;
+
+  if (commandFix === 'help') {
+    output += `\n\nNote: commands starts with slash **/**. Example: **/help**.`;
+  }
+
+  return {
+    msgNotify: ``,
+    msgSendBack: `${output}`,
+    notifyType: 'log',
+  };
+
+}
+
+function version() {
+  return {
+    msgNotify: ``,
+    msgSendBack: `I am running on _adamant-mixer_ software version _${config.version}_. Revise code on ADAMANT's GitHub.`,
+    notifyType: 'log',
+  };
+}
+
+async function send(params) {
+  return {
+    msgNotify: 'Command /send not implemented yet.',
+    msgSendBack: `Command /send not implemented yet.`,
+    notifyType: 'warn',
+  };
+}
+
+async function balances(params, tx, _, isNonAdmin) {
+  if (isNonAdmin) {
+    if (config.notify_non_admins) {
+      const notAdminMsg = `I won't execute this command as you are not an admin. Connect with my master.`;
+      api.sendMessage(config.passPhrase, tx.senderId, notAdminMsg).then((response) => {
+        if (!response.success) {
+          log.warn(`Failed to send ADM message '${notAdminMsg}' to ${tx.senderId}. ${response.errorMessage}.`);
+        }
+      });
+    }
+    return {
+      msgNotify: `Command /balance won't be executed as your are not an admin.`,
+      msgSendBack: `Command /balance won't be executed as your are not an admin.`,
+      notifyType: 'warn',
+    };
+  }
+
+  let output = '';
+  try {
+
+    const balancesArray = await getBalances(params);
+    balancesArray.forEach( (balance) => {
+      output += balance.senderId === null ? '' : '   ' + balance.senderId + '    ' + balance.amount + ' sats\n';
+    });
+  } catch (e) {
+    log.error(`Error in balances() of ${utils.getModuleName(module.id)} module: ` + e);
+  }
+
+  return {
+    msgNotify: ``,
+    msgSendBack: output,
+    notifyType: 'log',
+  };
+}
+
+async function getBalances(senders) {
+
+  const { paymentsDb } = db;
+
+  const retArray = [];
+  await Promise.all(senders.map(async (sender) => {
+    const pays = await paymentsDb.find({
+      senderId: sender,
+    });
+    if (!pays.length) {
+      retArray.push({
+        senderId: null,
+      });
+    } else {
+      const amount = pays.reduce((amount, pay) => amount + (pay.status === PAYMENT_STATUSES.CONFIRMED ? pay.amount : 0), 0);
+      retArray.push({
+        senderId: sender,
+        amount,
+      });
+    }
+  }));
+
+  return retArray;
+}
+
+function balancesString(balances, caption) {
+  let output = '';
+  let totalBTC = 0; let totalUSD = 0;
+  const unknownCryptos = [];
+
+  if (balances.length === 0) {
+    output = `All empty.`;
+  } else {
+    output = caption;
+    balances = balances.filter((crypto) => !['totalBTC', 'totalUSD'].includes(crypto.code));
+    balances.forEach((crypto) => {
+      output += `${utils.formatNumber(+(crypto.total).toFixed(8), true)} _${crypto.code}_`;
+      if (crypto.total !== crypto.free) {
+        output += ` (${utils.formatNumber(+crypto.free.toFixed(8), true)} available`;
+        if (crypto.freezed > 0) {
+          output += ` & ${utils.formatNumber(+crypto.freezed.toFixed(8), true)} frozen`;
+        }
+        output += ')';
+      }
+      output += '\n';
+
+      let value;
+      const skipUnknownCryptos = ['BTXCRD'];
+      if (crypto.usd) {
+        totalUSD += crypto.usd;
+      } else {
+        value = exchangerUtils.convertCryptos(crypto.code, 'USD', crypto.total).outAmount;
+        if (value) {
+          totalUSD += value;
+        } else if (!skipUnknownCryptos.includes(crypto.code)) {
+          unknownCryptos.push(crypto.code);
+        }
+      }
+      if (crypto.btc) {
+        totalBTC += crypto.btc;
+      } else {
+        value = exchangerUtils.convertCryptos(crypto.code, 'BTC', crypto.total).outAmount;
+        if (value) {
+          totalBTC += value;
+        }
+      }
+    });
+
+    output += `Total holdings ~ ${utils.formatNumber(+totalUSD.toFixed(2), true)} _USD_ or ${utils.formatNumber(totalBTC.toFixed(8), true)} _BTC_`;
+    if (unknownCryptos.length) {
+      output += `. Note: I didn't count unknown cryptos ${unknownCryptos.join(', ')}.`;
+    }
+    output += '\n';
+
+    balances.push({
+      code: 'totalUSD',
+      total: totalUSD,
+    });
+    balances.push({
+      code: 'totalBTC',
+      total: totalBTC,
+    });
+
+  }
+  return { output, balances };
+}
+
+async function getBalancesInfo(accountNo = 0, tx, isWebApi = false) {
+
+  let output = '';
+  try {
+
+    let balances =
+      await traderapi.getBalances();
+
+    const caption = `${config.exchangeName} balances:\n`;
+    const balancesObject = balancesString(balances, caption);
+    output = balancesObject.output;
+    balances = balancesObject.balances;
+
+    if (!isWebApi) {
+      output += utils.differenceInBalancesString(
+          balances,
+          previousBalances[accountNo][tx.senderId],
+          orderUtils.parseMarket(config.pair),
+      );
+
+      previousBalances[accountNo][tx.senderId] = balances;
+    }
+  } catch (e) {
+    log.error(`Error in getBalancesInfo() of ${utils.getModuleName(module.id)} module: ` + e);
+  }
+
+  return output;
+}
+
+/*
+async function balances({}, tx, isWebApi = false) {
+
+  let output = '';
+  try {
+
+    const account0Balances = await getBalancesInfo(0, tx, isWebApi);
+    const account1Balances = undefined;
+    output = account1Balances ? account0Balances + '\n\n' + account1Balances : account0Balances;
+
+  } catch (e) {
+    log.error(`Error in balances() of ${utils.getModuleName(module.id)} module: ` + e);
+  }
+
+  return {
+    msgNotify: ``,
+    msgSendBack: output,
+    notifyType: 'log',
+  };
+
+}
+*/
+
 /**
  * Command to confirm previous command: '/enable pw' or '/make price'
  * @param {Array of String} params Doesn't matter
@@ -99,38 +309,6 @@ async function y(params, tx) {
   } catch (e) {
     log.error(`Error in y()-confirmation of ${utils.getModuleName(module.id)} module: ` + e);
   }
-}
-
-async function send(params) {
-  return {
-    msgNotify: 'Command /send not implemented yet.',
-    msgSendBack: `Command /send not implemented yet.`,
-    notifyType: 'warn',
-  };
-}
-
-async function balance(params, tx, _, isNonAdmin) {
-  if (isNonAdmin) {
-    if (config.notify_non_admins) {
-      const notAdminMsg = `I won't execute this command as you are not an admin. Connect with my master.`;
-      api.sendMessage(config.passPhrase, tx.senderId, notAdminMsg).then((response) => {
-        if (!response.success) {
-          log.warn(`Failed to send ADM message '${notAdminMsg}' to ${tx.senderId}. ${response.errorMessage}.`);
-        }
-      });
-    }
-    return {
-      msgNotify: `Command /balance won't be executed as your are not an admin.`,
-      msgSendBack: `Command /balance won't be executed as your are not an admin.`,
-      notifyType: 'warn',
-    };
-  }
-
-  return {
-    msgNotify: 'Command /balance not implemented yet.',
-    msgSendBack: `Command /balance not implemented yet.`,
-    notifyType: 'warn',
-  };
 }
 
 function start(params) {
@@ -1342,24 +1520,6 @@ function params() {
 
 }
 
-function help({}, {}, commandFix) {
-
-  let output = `I am **online** and ready to mix transactions.`;
-  output += ` See command reference on https://xxxxxxxxxxxxxx`;
-  output += `\nHappy mixing!`;
-
-  if (commandFix === 'help') {
-    output += `\n\nNote: commands starts with slash **/**. Example: **/help**.`;
-  }
-
-  return {
-    msgNotify: ``,
-    msgSendBack: `${output}`,
-    notifyType: 'log',
-  };
-
-}
-
 async function rates(params) {
 
   let output = '';
@@ -1995,130 +2155,11 @@ async function calc(params, tx, isWebApi = false) {
  * @param {Array of Object} balances Balances
  * @return {String, Object} String of balances info and balances object with totalBTC and totalUSD
  */
-function balancesString(balances, caption) {
-  let output = '';
-  let totalBTC = 0; let totalUSD = 0;
-  const unknownCryptos = [];
-
-  if (balances.length === 0) {
-    output = `All empty.`;
-  } else {
-    output = caption;
-    balances = balances.filter((crypto) => !['totalBTC', 'totalUSD'].includes(crypto.code));
-    balances.forEach((crypto) => {
-      output += `${utils.formatNumber(+(crypto.total).toFixed(8), true)} _${crypto.code}_`;
-      if (crypto.total !== crypto.free) {
-        output += ` (${utils.formatNumber(+crypto.free.toFixed(8), true)} available`;
-        if (crypto.freezed > 0) {
-          output += ` & ${utils.formatNumber(+crypto.freezed.toFixed(8), true)} frozen`;
-        }
-        output += ')';
-      }
-      output += '\n';
-
-      let value;
-      const skipUnknownCryptos = ['BTXCRD'];
-      if (crypto.usd) {
-        totalUSD += crypto.usd;
-      } else {
-        value = exchangerUtils.convertCryptos(crypto.code, 'USD', crypto.total).outAmount;
-        if (value) {
-          totalUSD += value;
-        } else if (!skipUnknownCryptos.includes(crypto.code)) {
-          unknownCryptos.push(crypto.code);
-        }
-      }
-      if (crypto.btc) {
-        totalBTC += crypto.btc;
-      } else {
-        value = exchangerUtils.convertCryptos(crypto.code, 'BTC', crypto.total).outAmount;
-        if (value) {
-          totalBTC += value;
-        }
-      }
-    });
-
-    output += `Total holdings ~ ${utils.formatNumber(+totalUSD.toFixed(2), true)} _USD_ or ${utils.formatNumber(totalBTC.toFixed(8), true)} _BTC_`;
-    if (unknownCryptos.length) {
-      output += `. Note: I didn't count unknown cryptos ${unknownCryptos.join(', ')}.`;
-    }
-    output += '\n';
-
-    balances.push({
-      code: 'totalUSD',
-      total: totalUSD,
-    });
-    balances.push({
-      code: 'totalBTC',
-      total: totalBTC,
-    });
-
-  }
-  return { output, balances };
-}
-
-async function getBalancesInfo(accountNo = 0, tx, isWebApi = false) {
-
-  let output = '';
-  try {
-
-    let balances =
-      await traderapi.getBalances();
-
-    const caption = `${config.exchangeName} balances:\n`;
-    const balancesObject = balancesString(balances, caption);
-    output = balancesObject.output;
-    balances = balancesObject.balances;
-
-    if (!isWebApi) {
-      output += utils.differenceInBalancesString(
-          balances,
-          previousBalances[accountNo][tx.senderId],
-          orderUtils.parseMarket(config.pair),
-      );
-
-      previousBalances[accountNo][tx.senderId] = balances;
-    }
-  } catch (e) {
-    log.error(`Error in getBalancesInfo() of ${utils.getModuleName(module.id)} module: ` + e);
-  }
-
-  return output;
-}
-
-async function balances({}, tx, isWebApi = false) {
-
-  let output = '';
-  try {
-
-    const account0Balances = await getBalancesInfo(0, tx, isWebApi);
-    const account1Balances = undefined;
-    output = account1Balances ? account0Balances + '\n\n' + account1Balances : account0Balances;
-
-  } catch (e) {
-    log.error(`Error in balances() of ${utils.getModuleName(module.id)} module: ` + e);
-  }
-
-  return {
-    msgNotify: ``,
-    msgSendBack: output,
-    notifyType: 'log',
-  };
-
-}
-
-function version() {
-  return {
-    msgNotify: ``,
-    msgSendBack: `I am running on _adamant-tradebot_ software version _${config.version}_. Revise code on ADAMANT's GitHub.`,
-    notifyType: 'log',
-  };
-}
-
 const commands = {
   help,
+  version,
   send,
-  balance,
+  balances,
   /*
   ? rates,
   ? stats,
