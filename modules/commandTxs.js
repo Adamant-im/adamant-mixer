@@ -111,18 +111,21 @@ async function balances(params, tx, _, isNonAdmin) {
       });
     }
     return {
-      msgNotify: `Command /balance won't be executed as your are not an admin.`,
-      msgSendBack: `Command /balance won't be executed as your are not an admin.`,
+      msgNotify: `Command /balances won't be executed as your are not an admin.`,
+      msgSendBack: `Command /balances won't be executed as your are not an admin.`,
       notifyType: 'warn',
     };
   }
 
   let output = '';
+  let balancesArray;
   try {
 
-    const balancesArray = await getBalances(params);
+    balancesArray = await getBalances(params);
     balancesArray.forEach( (balance) => {
-      output += balance.senderId === null ? '' : '   ' + balance.senderId + '    ' + balance.amount + ' sats\n';
+      output += balance.senderId === null ?
+        '' :
+        '   ' + balance.senderId + '    ' + utils.satsToADM(balance.amount) + ' ADM\n';
     });
   } catch (e) {
     log.error(`Error in balances() of ${utils.getModuleName(module.id)} module: ` + e);
@@ -132,6 +135,7 @@ async function balances(params, tx, _, isNonAdmin) {
     msgNotify: ``,
     msgSendBack: output,
     notifyType: 'log',
+    balancesArray,
   };
 }
 
