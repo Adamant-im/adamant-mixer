@@ -62,6 +62,8 @@ module.exports = async (tx) => {
     messageDirective = 'transfer';
   } else if (decryptedMessage.startsWith('/')) {
     messageDirective = 'command';
+  } else {
+    messageDirective = 'unknown';
   }
 
   const spamerAlreadyNotified = await incomingTxsDb.findOne({

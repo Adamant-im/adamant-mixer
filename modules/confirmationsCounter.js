@@ -73,7 +73,7 @@ module.exports = async (pay) => {
       confirmations = lastBlockHeight - tx.height + 1;
     }
 
-    pay.status = confirmations >= ADM_MIN_CONFIRMATIONS ? PAYMENT_STATUSES.CONFIRMED : PAYMENT_STATUSES.NOT_CONFIRMED;
+    pay.status = confirmations >= ADM_MIN_CONFIRMATIONS ? PAYMENT_STATUSES.CONFIRMED : PAYMENT_STATUSES.PENDING;
     pay.confirmations = confirmations;
     pay.updateCounter++;
     await pay.save();
@@ -116,7 +116,7 @@ module.exports = async (pay) => {
 setInterval(async () => {
   const { paymentsDb } = db;
   (arr = await paymentsDb.find({
-    status: PAYMENT_STATUSES.NOT_CONFIRMED,
+    status: PAYMENT_STATUSES.PENDING,
   }));
   arr.forEach(async (pay) => {
     module.exports(pay);

@@ -16,7 +16,7 @@ module.exports = {
   ADM_MAX_CONFIRMATION_COUNTER: 10, // Maximal number of confirmation update attempts
 
   PAYMENT_STATUSES: { // Статусы платежа
-    NOT_CONFIRMED: 0, // Получение не подтверждено, количество подтверждений в блокчейне меньше 2
+    PENDING: 0, // Получение не подтверждено, количество подтверждений в блокчейне меньше 2
     CONFIRMED: 1, // Завершена, количество подтверждений в блокчейне > 1
     PLANNED: 2, // Запланирована (frozen)
     PLANNED_CANCELED: 3, // Запланированная транзакция отменена
