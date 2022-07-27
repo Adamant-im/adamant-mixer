@@ -12,7 +12,7 @@ const {
 
 module.exports = async (itx, tx) => {
 
-  if (tx.type === 8) { // income payment fron chat
+  if (tx.type === 8) { // income payment from chat
     const msg = itx.decryptedMessage || '';
     if (msg.includes('_transaction')) { // not ADM income payment
       const currencyMsg = msg.match(/"type":"(.*)_transaction/)[1];
